@@ -1,5 +1,8 @@
 import { useState, type FormEvent, type ReactNode } from "react";
 
+import heroImage from './assets/driveway-school-hero.png';
+
+
 type IconName =
   | "home"
   | "calendar"
@@ -940,10 +943,7 @@ export default function App() {
             ) : (
               <>
                 <section className="premium-hero">
-                  <img
-                    src="/images/driveway-school-hero.png"
-                    alt="Véhicule école DriveWay sur une route urbaine au crépuscule"
-                  />
+                  <img src={heroImage} alt="Véhicule école DriveWay sur une route urbaine au crépuscule" />
                   <div className="hero-vignette" />
                   <div className="hero-content">
                     <span className="overline">
