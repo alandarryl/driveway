@@ -105,6 +105,26 @@ function Icon({ name, size = 20 }: { name: IconName; size?: number }) {
   );
 }
 
+function DriveWayMark({ size = 40 }: { size?: number }) {
+  return (
+    <svg
+      className="driveway-mark"
+      aria-hidden="true"
+      width={size}
+      height={size}
+      viewBox="0 0 48 48"
+      fill="none"
+    >
+      <path
+        fillRule="evenodd"
+        d="M5 7h12c10.8 0 18 6.7 18 17s-7.2 17-18 17H5V7Zm9 8v18h3c5.8 0 9-3.5 9-9s-3.2-9-9-9h-3Z"
+        className="mark-d"
+      />
+      <path d="m20 15 5 21 6-13 6 13 6-21" className="mark-w" />
+    </svg>
+  );
+}
+
 const navItems: { label: string; icon: IconName }[] = [
   { label: "Vue d’ensemble", icon: "home" },
   { label: "Planning", icon: "calendar" },
@@ -360,6 +380,381 @@ function AdminDashboard() {
   );
 }
 
+type SlotStatus = "available" | "mine" | "occupied";
+
+function StudentPlanning() {
+  const [selectedDay, setSelectedDay] = useState(18);
+  const [slots, setSlots] = useState<
+    Array<{ time: string; status: SlotStatus; instructor: string }>
+  >([
+    { time: "09:00", status: "occupied", instructor: "Réservé par un autre élève" },
+    { time: "10:00", status: "mine", instructor: "Votre leçon avec Thomas" },
+    { time: "11:30", status: "available", instructor: "Disponible avec Thomas" },
+    { time: "14:00", status: "available", instructor: "Disponible avec Amélie" },
+    { time: "15:30", status: "occupied", instructor: "Réservé par un autre élève" },
+    { time: "17:00", status: "available", instructor: "Disponible avec Thomas" },
+  ]);
+
+  const availableDays = [3, 5, 6, 10, 12, 13, 17, 18, 19, 21, 24, 26, 27, 28];
+  const myDays = [18, 21, 24];
+  const occupiedDays = [4, 7, 11, 14, 20, 25];
+  const monthDays = [
+    { day: 26, outside: true },
+    { day: 27, outside: true },
+    { day: 28, outside: true },
+    { day: 29, outside: true },
+    { day: 30, outside: true },
+    { day: 31, outside: true },
+    ...Array.from({ length: 30 }, (_, index) => ({ day: index + 1, outside: false })),
+    { day: 1, outside: true },
+    { day: 2, outside: true },
+    { day: 3, outside: true },
+    { day: 4, outside: true },
+    { day: 5, outside: true },
+    { day: 6, outside: true },
+  ];
+
+  function updateSlot(index: number, status: SlotStatus) {
+    setSlots((current) =>
+      current.map((slot, slotIndex) =>
+        slotIndex === index
+          ? {
+              ...slot,
+              status,
+              instructor: status === "mine" ? "Votre leçon avec Thomas" : "Disponible avec Thomas",
+            }
+          : slot,
+      ),
+    );
+  }
+
+  return (
+    <div className="planning-page">
+      <section className="planning-intro">
+        <div>
+          <span className="overline muted">MON PLANNING</span>
+          <h2>Organisez vos prochaines leçons</h2>
+          <p>Consultez les disponibilités de l’agence et gérez vos réservations.</p>
+        </div>
+        <button className="primary-action">
+          <Icon name="calendar" size={16} /> Mes réservations
+        </button>
+      </section>
+
+      <section className="planning-layout">
+        <article className="glass-card calendar-card">
+          <div className="calendar-toolbar">
+            <button aria-label="Mois précédent">
+              <Icon name="arrow" size={17} />
+            </button>
+            <div>
+              <span>JUIN</span>
+              <strong>2025</strong>
+            </div>
+            <button aria-label="Mois suivant">
+              <Icon name="arrow" size={17} />
+            </button>
+          </div>
+          <div className="calendar-legend">
+            <span>
+              <i className="available" /> Disponible
+            </span>
+            <span>
+              <i className="mine" /> Ma réservation
+            </span>
+            <span>
+              <i className="occupied" /> Occupé par un autre élève
+            </span>
+          </div>
+          <div className="calendar-weekdays">
+            {["LUN", "MAR", "MER", "JEU", "VEN", "SAM", "DIM"].map((day) => (
+              <span key={day}>{day}</span>
+            ))}
+          </div>
+          <div className="calendar-grid">
+            {monthDays.map((date, index) => {
+              const status = date.outside
+                ? ""
+                : myDays.includes(date.day)
+                  ? "mine"
+                  : occupiedDays.includes(date.day)
+                    ? "occupied"
+                    : availableDays.includes(date.day)
+                      ? "available"
+                      : "";
+              return (
+                <button
+                  className={`${date.outside ? "outside" : ""} ${selectedDay === date.day && !date.outside ? "selected" : ""}`}
+                  disabled={date.outside}
+                  key={`${date.outside ? "outside" : "june"}-${date.day}-${index}`}
+                  onClick={() => setSelectedDay(date.day)}
+                >
+                  <span>{date.day}</span>
+                  {status && <i className={status} />}
+                </button>
+              );
+            })}
+          </div>
+        </article>
+
+        <aside className="glass-card slots-panel">
+          <div className="slots-heading">
+            <div>
+              <span className="overline muted">CRÉNEAUX DU JOUR</span>
+              <h2>Mercredi {selectedDay} juin</h2>
+            </div>
+            <span className="availability-count">
+              {slots.filter((slot) => slot.status === "available").length} disponibles
+            </span>
+          </div>
+          <div className="day-summary">
+            <span>
+              <Icon name="clock" size={16} /> Leçons de 1 heure
+            </span>
+            <span>
+              <Icon name="pin" size={16} /> Agence République
+            </span>
+          </div>
+          <div className="slot-schedule">
+            {slots.map((slot, index) => (
+              <div className={`schedule-slot ${slot.status}`} key={slot.time}>
+                <time>{slot.time}</time>
+                <span className="schedule-track">
+                  <i />
+                </span>
+                <div>
+                  <strong>
+                    {slot.status === "available"
+                      ? "Créneau disponible"
+                      : slot.status === "mine"
+                        ? "Votre réservation"
+                        : "Créneau indisponible"}
+                  </strong>
+                  <small>{slot.instructor}</small>
+                </div>
+                {slot.status === "available" ? (
+                  <button onClick={() => updateSlot(index, "mine")}>Réserver</button>
+                ) : slot.status === "mine" ? (
+                  <button className="cancel-slot" onClick={() => updateSlot(index, "available")}>
+                    Annuler
+                  </button>
+                ) : (
+                  <span className="lock-label">Occupé</span>
+                )}
+              </div>
+            ))}
+          </div>
+          <div className="planning-note">
+            <Icon name="bell" size={16} />
+            <p>Vous serez notifiée si un créneau occupé se libère.</p>
+            <button>Activer l’alerte</button>
+          </div>
+        </aside>
+      </section>
+    </div>
+  );
+}
+
+function StudentMessages() {
+  const [notificationSent, setNotificationSent] = useState(false);
+
+  return (
+    <div className="messages-page">
+      <section className="messages-intro">
+        <div>
+          <span className="overline muted">CENTRE DE MESSAGES</span>
+          <h2>Restez informée, sans y penser</h2>
+          <p>DriveWay vous prévient automatiquement avant chaque leçon réservée.</p>
+        </div>
+        <button className="primary-action" onClick={() => setNotificationSent(true)}>
+          <Icon name="bell" size={16} /> Simuler le rappel
+        </button>
+      </section>
+
+      <section className="messages-layout">
+        <aside className="glass-card conversation-list">
+          <div className="conversation-list-head">
+            <h2>Messages</h2>
+            <span>2 non lus</span>
+          </div>
+          <button className="conversation-item active">
+            <span className="conversation-avatar brand-avatar">
+              <Icon name="bell" size={17} />
+            </span>
+            <span>
+              <strong>Rappels DriveWay</strong>
+              <small>Votre leçon est prévue demain…</small>
+            </span>
+            <span>
+              <time>10:00</time>
+              <i />
+            </span>
+          </button>
+          <button className="conversation-item">
+            <span className="conversation-avatar">TM</span>
+            <span>
+              <strong>Thomas Martin</strong>
+              <small>Très bien pour la séance de samedi.</small>
+            </span>
+            <span>
+              <time>Hier</time>
+            </span>
+          </button>
+          <button className="conversation-item">
+            <span className="conversation-avatar">DW</span>
+            <span>
+              <strong>Agence République</strong>
+              <small>Votre paiement a bien été reçu.</small>
+            </span>
+            <span>
+              <time>Lun.</time>
+            </span>
+          </button>
+        </aside>
+
+        <article className="glass-card conversation-panel">
+          <header className="conversation-header">
+            <span className="conversation-avatar brand-avatar">
+              <Icon name="bell" size={18} />
+            </span>
+            <div>
+              <strong>Rappels DriveWay</strong>
+              <small>
+                <i /> Notifications automatiques
+              </small>
+            </div>
+            <button aria-label="Options">•••</button>
+          </header>
+          <div className="message-thread">
+            <div className="thread-date">
+              <span>MARDI 17 JUIN</span>
+            </div>
+            <div className="system-event">
+              <Icon name="clock" size={15} />
+              <span>Rappel programmé automatiquement 24h avant la leçon</span>
+            </div>
+            <div
+              className={`message-bubble reminder-message ${notificationSent ? "just-sent" : ""}`}
+            >
+              <div className="reminder-badge">
+                <Icon name="bell" size={15} /> RAPPEL · J-1
+              </div>
+              <p>Bonjour Clara,</p>
+              <p>
+                Votre leçon de conduite est prévue <strong>demain, mercredi 18 juin à 10:00</strong>
+                , avec Thomas Martin.
+              </p>
+              <div className="message-booking-card">
+                <span className="message-date">
+                  <strong>18</strong>
+                  <small>JUIN</small>
+                </span>
+                <div>
+                  <strong>Circulation urbaine</strong>
+                  <span>
+                    <Icon name="clock" size={13} /> 10:00 — 11:00
+                  </span>
+                  <span>
+                    <Icon name="pin" size={13} /> Agence République
+                  </span>
+                </div>
+              </div>
+              <p className="reminder-footnote">
+                Pensez à vous présenter 10 minutes avant le départ avec votre livret
+                d’apprentissage.
+              </p>
+              <div className="message-actions">
+                <button>Voir ma réservation</button>
+                <button>Prévenir d’un retard</button>
+              </div>
+              <time>
+                {notificationSent ? "À l’instant" : "Aujourd’hui · 10:00"}{" "}
+                <Icon name="check" size={12} />
+              </time>
+            </div>
+            {notificationSent && (
+              <div className="delivery-event">
+                <span>
+                  <Icon name="check" size={13} />
+                </span>
+                Notification envoyée par e-mail et dans l’application
+              </div>
+            )}
+          </div>
+          <footer className="message-composer">
+            <button aria-label="Ajouter une pièce jointe">+</button>
+            <input aria-label="Votre message" placeholder="Écrire une réponse…" />
+            <button className="send-button" aria-label="Envoyer">
+              <Icon name="arrow" size={16} />
+            </button>
+          </footer>
+        </article>
+
+        <aside className="glass-card automation-panel">
+          <span className="automation-icon">
+            <Icon name="bell" size={21} />
+          </span>
+          <span className="overline muted">AUTOMATISATION ACTIVE</span>
+          <h2>Rappel 24h avant</h2>
+          <p>Ce rappel est envoyé à l’élève sur tous ses canaux actifs.</p>
+          <div className="automation-timeline">
+            <span className="done">
+              <i>
+                <Icon name="check" size={12} />
+              </i>
+              <span>
+                <strong>Réservation confirmée</strong>
+                <small>Samedi 14 juin · 16:32</small>
+              </span>
+            </span>
+            <span className="current">
+              <i>
+                <Icon name="bell" size={12} />
+              </i>
+              <span>
+                <strong>Rappel automatique</strong>
+                <small>Mardi 17 juin · 10:00</small>
+              </span>
+            </span>
+            <span>
+              <i>
+                <Icon name="calendar" size={12} />
+              </i>
+              <span>
+                <strong>Leçon de conduite</strong>
+                <small>Mercredi 18 juin · 10:00</small>
+              </span>
+            </span>
+          </div>
+          <div className="channels">
+            <span>
+              <Icon name="message" size={14} /> Application <i />
+            </span>
+            <span>
+              <Icon name="message" size={14} /> E-mail <i />
+            </span>
+            <span>
+              <Icon name="message" size={14} /> SMS <i className="off" />
+            </span>
+          </div>
+        </aside>
+      </section>
+
+      {notificationSent && (
+        <div className="notification-toast" role="status">
+          <span>
+            <Icon name="check" size={16} />
+          </span>
+          <div>
+            <strong>Rappel envoyé</strong>
+            <small>Clara a été notifiée pour sa leçon de demain.</small>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
 export default function App() {
   const [theme, setTheme] = useState<"dark" | "light">("dark");
   const [role, setRole] = useState<"student" | "instructor" | "admin">("student");
@@ -427,7 +822,7 @@ export default function App() {
     <div className="premium-app" data-theme={theme}>
       <aside className="premium-sidebar">
         <a className="premium-logo" href="#" aria-label="DriveWay, accueil">
-          <span className="logo-glyph">D</span>
+          <DriveWayMark />
           <span>
             Drive<span>Way</span>
           </span>
@@ -538,167 +933,182 @@ export default function App() {
 
         {role === "student" ? (
           <>
-            <section className="premium-hero">
-              <img
-            src="/images/driveway-school-hero.png"
-                alt="Véhicule école DriveWay sur une route urbaine au crépuscule"
-              />
-              <div className="hero-vignette" />
-              <div className="hero-content">
-                <span className="overline">
-                  <i /> PROCHAINE LEÇON
-                </span>
-                <h2>
-                  Maîtrisez la ville.
-                  <br />
-                  Prenez confiance.
-                </h2>
-                <p>Demain, vous travaillez l’anticipation et les insertions avec Thomas.</p>
-                <div className="hero-meta">
-                  <span>
-                    <Icon name="calendar" size={17} />
-                    <span>
-                      <small>DATE</small>
-                      <strong>18 juin</strong>
+            {active === "Planning" ? (
+              <StudentPlanning />
+            ) : active === "Messages" ? (
+              <StudentMessages />
+            ) : (
+              <>
+                <section className="premium-hero">
+                  <img
+                    src="/images/driveway-school-hero.png"
+                    alt="Véhicule école DriveWay sur une route urbaine au crépuscule"
+                  />
+                  <div className="hero-vignette" />
+                  <div className="hero-content">
+                    <span className="overline">
+                      <i /> PROCHAINE LEÇON
                     </span>
-                  </span>
-                  <span>
-                    <Icon name="clock" size={17} />
-                    <span>
-                      <small>HORAIRE</small>
-                      <strong>10:00 — 11:00</strong>
-                    </span>
-                  </span>
-                  <span>
-                    <Icon name="pin" size={17} />
-                    <span>
-                      <small>DÉPART</small>
-                      <strong>République</strong>
-                    </span>
-                  </span>
-                </div>
-              </div>
-              <button className="hero-detail">
-                Voir le détail <Icon name="arrow" size={16} />
-              </button>
-            </section>
-
-            <section className="metric-grid" aria-label="Indicateurs de progression">
-              <article className="glass-card metric-card">
-                <div className="metric-head">
-                  <span>Progression globale</span>
-                  <small>+8% ce mois</small>
-                </div>
-                <div className="metric-content">
-                  <div className="progress-ring" style={{ "--value": "68" } as React.CSSProperties}>
-                    <span>
-                      68<small>%</small>
-                    </span>
+                    <h2>
+                      Maîtrisez la ville.
+                      <br />
+                      Prenez confiance.
+                    </h2>
+                    <p>Demain, vous travaillez l’anticipation et les insertions avec Thomas.</p>
+                    <div className="hero-meta">
+                      <span>
+                        <Icon name="calendar" size={17} />
+                        <span>
+                          <small>DATE</small>
+                          <strong>18 juin</strong>
+                        </span>
+                      </span>
+                      <span>
+                        <Icon name="clock" size={17} />
+                        <span>
+                          <small>HORAIRE</small>
+                          <strong>10:00 — 11:00</strong>
+                        </span>
+                      </span>
+                      <span>
+                        <Icon name="pin" size={17} />
+                        <span>
+                          <small>DÉPART</small>
+                          <strong>République</strong>
+                        </span>
+                      </span>
+                    </div>
                   </div>
-                  <div>
-                    <strong>En bonne voie</strong>
-                    <p>Votre rythme est régulier. Plus que 6 heures avant le bilan.</p>
-                  </div>
-                </div>
-              </article>
-
-              <article className="glass-card metric-card">
-                <div className="metric-head">
-                  <span>Heures de conduite</span>
-                  <small>Objectif 30h</small>
-                </div>
-                <strong className="metric-number">
-                  24<span>h</span>
-                </strong>
-                <div className="linear-progress">
-                  <span style={{ width: "80%" }} />
-                </div>
-                <div className="scale">
-                  <span>0h</span>
-                  <span>6h restantes</span>
-                  <span>30h</span>
-                </div>
-              </article>
-
-              <article className="glass-card metric-card code-metric">
-                <div className="metric-head">
-                  <span>Code de la route</span>
-                  <small>7 derniers jours</small>
-                </div>
-                <div className="code-score">
-                  <strong>
-                    36<span>/40</span>
-                  </strong>
-                  <span>Meilleur score</span>
-                </div>
-                <div
-                  className="spark-bars"
-                  aria-label="Scores récents : 29, 32, 31, 35, 34 et 36 sur 40"
-                >
-                  {[29, 32, 31, 35, 34, 36].map((score, index) => (
-                    <i
-                      key={index}
-                      style={{ height: `${(score / 40) * 100}%` }}
-                      className={index === 5 ? "current" : ""}
-                    />
-                  ))}
-                </div>
-              </article>
-            </section>
-
-            <section className="content-grid">
-              <article className="glass-card sessions-card">
-                <div className="card-heading">
-                  <div>
-                    <span className="overline muted">VOTRE AGENDA</span>
-                    <h2>Prochaines séances</h2>
-                  </div>
-                  <button onClick={() => setActive("Planning")}>
-                    Tout afficher <Icon name="arrow" size={15} />
+                  <button className="hero-detail">
+                    Voir le détail <Icon name="arrow" size={16} />
                   </button>
-                </div>
-                <div className="session-list">
-                  {sessions.map((session, index) => (
-                    <button className="session-item" key={session.date}>
-                      <span className="session-date">
-                        <strong>{session.date}</strong>
-                        <small>{session.month}</small>
-                      </span>
-                      <span className="session-line">
-                        <i className={index === 2 ? "gold" : ""} />
-                      </span>
-                      <span className="session-copy">
-                        <small>
-                          {session.time} · {session.status}
-                        </small>
-                        <strong>{session.title}</strong>
-                      </span>
-                      <span className="session-arrow">
-                        <Icon name="arrow" size={17} />
-                      </span>
-                    </button>
-                  ))}
-                </div>
-              </article>
+                </section>
 
-              <article className="experience-card">
-                <img
-                  src="/images/driveway-interior.png"
-                  alt="Intérieur premium d’un véhicule école DriveWay"
-                />
-                <div className="experience-overlay" />
-                <div>
-                  <span className="overline">PRÉPAREZ VOTRE LEÇON</span>
-                  <h2>Les bons réflexes avant de démarrer.</h2>
-                  <button>
-                    <span>
-                      <Icon name="play" size={15} />
-                    </span>{" "}
-                    Voir le module · 4 min
-                  </button>
-                </div>
-              </article>
-            </section>
+                <section className="metric-grid" aria-label="Indicateurs de progression">
+                  <article className="glass-card metric-card">
+                    <div className="metric-head">
+                      <span>Progression globale</span>
+                      <small>+8% ce mois</small>
+                    </div>
+                    <div className="metric-content">
+                      <div
+                        className="progress-ring"
+                        style={{ "--value": "68" } as React.CSSProperties}
+                      >
+                        <span>
+                          68<small>%</small>
+                        </span>
+                      </div>
+                      <div>
+                        <strong>En bonne voie</strong>
+                        <p>Votre rythme est régulier. Plus que 6 heures avant le bilan.</p>
+                      </div>
+                    </div>
+                  </article>
+
+                  <article className="glass-card metric-card">
+                    <div className="metric-head">
+                      <span>Heures de conduite</span>
+                      <small>Objectif 30h</small>
+                    </div>
+                    <strong className="metric-number">
+                      24<span>h</span>
+                    </strong>
+                    <div className="linear-progress">
+                      <span style={{ width: "80%" }} />
+                    </div>
+                    <div className="scale">
+                      <span>0h</span>
+                      <span>6h restantes</span>
+                      <span>30h</span>
+                    </div>
+                  </article>
+
+                  <article className="glass-card metric-card code-metric">
+                    <div className="metric-head">
+                      <span>Code de la route</span>
+                      <small>7 derniers jours</small>
+                    </div>
+                    <div className="code-score">
+                      <strong>
+                        36<span>/40</span>
+                      </strong>
+                      <span>Meilleur score</span>
+                    </div>
+                    <div
+                      className="spark-bars"
+                      aria-label="Scores récents : 29, 32, 31, 35, 34 et 36 sur 40"
+                    >
+                      {[29, 32, 31, 35, 34, 36].map((score, index) => (
+                        <i
+                          key={index}
+                          style={{ height: `${(score / 40) * 100}%` }}
+                          className={index === 5 ? "current" : ""}
+                        />
+                      ))}
+                    </div>
+                  </article>
+                </section>
+
+                <section className="content-grid">
+                  <article className="glass-card sessions-card">
+                    <div className="card-heading">
+                      <div>
+                        <span className="overline muted">VOTRE AGENDA</span>
+                        <h2>Prochaines séances</h2>
+                      </div>
+                      <button onClick={() => setActive("Planning")}>
+                        Tout afficher <Icon name="arrow" size={15} />
+                      </button>
+                    </div>
+                    <div className="session-list">
+                      {sessions.map((session, index) => (
+                        <button className="session-item" key={session.date}>
+                          <span className="session-date">
+                            <strong>{session.date}</strong>
+                            <small>{session.month}</small>
+                          </span>
+                          <span className="session-line">
+                            <i className={index === 2 ? "gold" : ""} />
+                          </span>
+                          <span className="session-copy">
+                            <small>
+                              {session.time} · {session.status}
+                            </small>
+                            <strong>{session.title}</strong>
+                          </span>
+                          <span className="session-arrow">
+                            <Icon name="arrow" size={17} />
+                          </span>
+                        </button>
+                      ))}
+                    </div>
+                  </article>
+
+                  <article className="experience-card">
+                    <div className="traffic-light-scene" aria-hidden="true">
+                      <span className="traffic-glow" />
+                      <div className="traffic-light">
+                        <i className="red" />
+                        <i className="amber" />
+                        <i className="green" />
+                      </div>
+                      <span className="traffic-pole" />
+                    </div>
+                    <div>
+                      <span className="overline">PRÉPAREZ VOTRE LEÇON</span>
+                      <h2>Les bons réflexes avant de démarrer.</h2>
+                      <button>
+                        <span>
+                          <Icon name="play" size={15} />
+                        </span>{" "}
+                        Voir le module · 4 min
+                      </button>
+                    </div>
+                  </article>
+                </section>
+              </>
+            )}
           </>
         ) : role === "instructor" ? (
           <InstructorDashboard />
@@ -794,7 +1204,7 @@ export default function App() {
               <Icon name="close" />
             </button>
             <div className="auth-brand">
-              <span className="logo-glyph">D</span>
+              <DriveWayMark size={36} />
               <span>
                 Drive<span>Way</span>
               </span>
