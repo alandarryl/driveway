@@ -1,0 +1,10 @@
+{
+  "description": "Une interface d’auto-école aide les élèves à suivre leur apprentissage de la conduite et à accéder aux informations et services essentiels de leur formation.",
+  "robots": {
+    "index": false
+  },
+  "accessibility": {
+    "addBypassLinks": false,
+    "ignoreReducedMotion": false
+  }
+}
