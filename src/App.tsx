@@ -943,7 +943,7 @@ export default function App() {
             ) : (
               <>
                 <section className="premium-hero">
-                  <img src="https://postimg.cc/crbHB58w" alt="Véhicule école DriveWay sur une route urbaine au crépuscule" />
+                  <img src="https://i.postimg.cc/VkYC1xfG/driveway-school-hero.png" alt="Véhicule école DriveWay sur une route urbaine au crépuscule" />
                   <div className="hero-vignette" />
                   <div className="hero-content">
                     <span className="overline">
